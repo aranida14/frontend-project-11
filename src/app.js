@@ -1,8 +1,12 @@
-import onChange from 'on-change';
 import * as yup from 'yup';
 import { isEmpty } from 'lodash';
+import i18next from 'i18next';
+import resources from './locales/index.js';
+import watch from './view.js';
 
 export default () => {
+  const defaultLang = 'ru';
+
   const elements = {
     form: document.querySelector('.rss-form'),
     input: document.querySelector('#url-input'),
@@ -11,35 +15,21 @@ export default () => {
   };
 
   const initialState = {
-    isValid: true,
-    errors: {},
+    form: {
+      status: 'filling', // processing | success
+      isValid: true,
+      errors: {},
+    },
     feeds: {},
   };
 
-  const state = onChange(initialState, (path, value) => {
-    switch (path) {
-      case 'isValid':
-        if (value) {
-          elements.input.classList.remove('is-invalid');
-        } else {
-          elements.input.classList.add('is-invalid');
-        }
-        break;
-      case 'errors':
-        if (!isEmpty(value)) {
-          elements.inputFeedback.textContent = value.url;
-        } else {
-          elements.inputFeedback.textContent = '';
-        }
-        break;
-      case 'feeds':
-        console.log(Object.keys(state.feeds));
-        elements.form.reset();
-        elements.input.focus();
-        break;
-      default:
-        break;
-    }
+  yup.setLocale({
+    mixed: {
+      notOneOf: () => ({ key: 'feedback.rssAlreadyExists' }),
+    },
+    string: {
+      url: () => ({ key: 'feedback.invalidUrl' }),
+    },
   });
 
   const buildSchema = (feeds) => yup.object({
@@ -48,7 +38,7 @@ export default () => {
       .trim()
       .required()
       .url()
-      .notOneOf(feeds, 'RSS already exists'), // .notOneOf(['https://lorem-rss.hexlet.app/feed']),
+      .notOneOf(feeds), // .notOneOf(['https://lorem-rss.hexlet.app/feed']), , 'RSS already exists'
   });
 
   const validate = (fields, schema) => {
@@ -64,24 +54,33 @@ export default () => {
     return promise;
   };
 
-  elements.form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.target);
-    const url = formData.get('url');
-    const schema = buildSchema(Object.keys(state.feeds));
-    validate({ url }, schema)
-      .then((errors) => {
-        if (!isEmpty(errors)) {
-          // console.log('has errors')
-          // console.log(errors);
-          state.errors = errors;
-          state.isValid = false;
-        } else {
-          // console.log('no errors')
-          state.isValid = true;
-          state.errors = {};
-          state.feeds = { ...state.feeds, [url]: { url } };
-        }
-      });
+  const i18n = i18next.createInstance();
+  i18n.init({
+    lng: defaultLang,
+    debug: false,
+    resources,
+  }).then((t) => {
+    const watchedState = watch(elements, t, initialState);
+    elements.form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      watchedState.form.status = 'processing';
+      const formData = new FormData(event.target);
+      const url = formData.get('url');
+      const schema = buildSchema(Object.keys(watchedState.feeds));
+      validate({ url }, schema)
+        .then((errors) => {
+          if (!isEmpty(errors)) {
+            watchedState.form.errors = errors;
+            watchedState.form.isValid = false;
+            watchedState.form.status = 'filling';
+          } else {
+            watchedState.form.isValid = true;
+            watchedState.form.errors = {};
+            watchedState.form.status = 'success';
+            const trimmedUrl = url.trim();
+            watchedState.feeds = { ...watchedState.feeds, [trimmedUrl]: { url: trimmedUrl } };
+          }
+        });
+    });
   });
 };
