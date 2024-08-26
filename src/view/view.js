@@ -1,5 +1,7 @@
 import onChange from 'on-change';
 import { isEmpty } from 'lodash';
+import renderFeeds from './renderFeeds.js';
+import renderPosts from './renderPosts.js';
 
 export default (elements, t, state) => {
   const {
@@ -7,6 +9,8 @@ export default (elements, t, state) => {
     input,
     inputFeedback,
     submitButton,
+    feedsContainer,
+    postsContainer,
   } = elements;
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
@@ -31,6 +35,10 @@ export default (elements, t, state) => {
         // console.log(Object.keys(watchedState.feeds));
         form.reset();
         input.focus();
+        renderFeeds(feedsContainer, value);
+        break;
+      case 'posts':
+        renderPosts(postsContainer, value);
         break;
       case 'form.status':
         if (value === 'processing') {
