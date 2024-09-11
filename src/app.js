@@ -1,9 +1,11 @@
 import * as yup from 'yup';
+import axios from 'axios';
 import { isEmpty, uniqueId } from 'lodash';
 import i18next from 'i18next';
 import resources from './locales/index.js';
 import watch from './view/view.js';
-import { feeds, posts } from './data.js';
+// import { feeds, posts } from './data.js';
+import parser from './parser.js';
 
 export default () => {
   const defaultLang = 'ru';
@@ -67,12 +69,14 @@ export default () => {
     const watchedState = watch(elements, t, initialState);
     elements.form.addEventListener('submit', (event) => {
       event.preventDefault();
-      watchedState.form.status = 'processing';
       const formData = new FormData(event.target);
       const url = formData.get('url');
       const schema = buildSchema(watchedState.feeds.map(({ link }) => link));
+
+      watchedState.form.status = 'processing';
       validate({ url }, schema)
         .then((errors) => {
+          // console.log({errors});
           if (!isEmpty(errors)) {
             watchedState.form.errors = errors;
             watchedState.form.isValid = false;
@@ -80,25 +84,68 @@ export default () => {
           } else {
             watchedState.form.isValid = true;
             watchedState.form.errors = {};
-            watchedState.form.status = 'success';
+
             const trimmedUrl = url.trim();
-            watchedState.feeds = [
-              ...watchedState.feeds,
-              {
-                id: uniqueId(),
-                link: trimmedUrl,
-                title: feeds[0].title,
-                description: feeds[0].description,
-              },
-            ];
-            watchedState.posts = [
-              ...watchedState.posts,
-              {
-                id: uniqueId(),
-                title: posts[0].title,
-                link: posts[0].link,
-              },
-            ];
+            axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(trimmedUrl)}`)
+              .then((response) => {
+                // console.log('response:');
+                // console.log(response);
+                // console.log(response.data);
+                // console.log(response.status);
+                if (response.status === 200) {
+                  return response.data;
+                }
+                throw new Error('Network error');
+              })
+              .then(({ contents }) => {
+                // console.log('contents');
+                // console.log(contents);
+                try {
+                  const feedData = parser(contents);
+                  return feedData;
+                } catch (error) {
+                  throw new Error('Invalid RSS');
+                }
+              })
+              .then((feedData) => {
+                watchedState.form.status = 'success';
+                // console.log({ feedData });
+                watchedState.feeds = [
+                  {
+                    id: uniqueId(),
+                    link: trimmedUrl,
+                    title: feedData.feedInfo.title,
+                    description: feedData.feedInfo.description,
+                  },
+                  ...watchedState.feeds,
+                ];
+                const posts = feedData.posts.map(({
+                  title,
+                  link,
+                  description,
+                  pubDate,
+                }) => ({
+                  id: uniqueId(),
+                  title,
+                  link,
+                  pubDate,
+                  description,
+                }));
+                watchedState.posts = [
+                  ...posts,
+                  ...watchedState.posts,
+                ];
+              })
+              .catch((error) => {
+                console.log(error);
+                watchedState.form.status = 'filling';
+
+                if (error.toString().includes('Network error')) {
+                  watchedState.form.errors = { networkError: error };
+                } else if (error.toString().includes('Invalid RSS')) {
+                  watchedState.form.errors = { invalidRss: error };
+                }
+              });
           }
         });
     });
