@@ -25,8 +25,10 @@ export default () => {
       isValid: true,
       errors: {},
     },
-    feeds: [], // { id: string, title: string, description: string, link: url }
-    posts: [], // { id: string, title: string, link: url, pubDate: number, description: string }
+    // { id: string, title: string, description: string, link: url }
+    feeds: [],
+    // { id: string, feedId: string, title: string, link: url, pubDate: number, description: string}
+    posts: [],
   };
 
   yup.setLocale({
@@ -110,9 +112,10 @@ export default () => {
               .then((feedData) => {
                 watchedState.form.status = 'success';
                 // console.log({ feedData });
+                const feedId = uniqueId();
                 watchedState.feeds = [
                   {
-                    id: uniqueId(),
+                    id: feedId,
                     link: trimmedUrl,
                     title: feedData.feedInfo.title,
                     description: feedData.feedInfo.description,
@@ -126,6 +129,7 @@ export default () => {
                   pubDate,
                 }) => ({
                   id: uniqueId(),
+                  feedId,
                   title,
                   link,
                   pubDate,
@@ -149,5 +153,57 @@ export default () => {
           }
         });
     });
+
+    // раз в 5 секунд проверять фиды на наличие новых постов
+    setTimeout(function updateFeeds() {
+      const promises = watchedState.feeds.map((feed) => axios
+        .get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(feed.link)}`)
+        .then((response) => {
+          if (response.status === 200) {
+            return response.data;
+          }
+          throw new Error('Network error');
+        })
+        .then(({ contents }) => {
+          try {
+            const feedData = parser(contents);
+            return feedData;
+          } catch (error) {
+            throw new Error('Invalid RSS');
+          }
+        })
+        .then((feedData) => {
+          const newPosts = feedData.posts
+            .filter((newPost) => {
+              const oldPost = watchedState.posts.find((post) => (
+                post.feedId === feed.id
+                && post.pubDate === newPost.pubDate
+              ));
+              // if (oldPost === undefined) {
+              //   console.log(`add new post ${JSON.stringify(newPost)}`);
+              // }
+              return oldPost === undefined;
+            })
+            .map((post) => ({
+              id: uniqueId(),
+              feedId: feed.id,
+              title: post.title,
+              link: post.link,
+              pubDate: post.pubDate,
+              description: post.description,
+            }));
+
+          watchedState.posts = [
+            ...newPosts,
+            ...watchedState.posts,
+          ];
+        })
+        .catch((error) => {
+          console.log(error);
+        }));
+
+      Promise.all(promises)
+        .then(() => setTimeout(updateFeeds, 5000));
+    }, 5000);
   });
 };
