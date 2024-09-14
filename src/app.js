@@ -84,7 +84,6 @@ export default () => {
       watchedState.form.status = 'processing';
       validate({ url }, schema)
         .then((errors) => {
-          // console.log({errors});
           if (!isEmpty(errors)) {
             watchedState.form.errors = errors;
             watchedState.form.isValid = false;
@@ -96,18 +95,12 @@ export default () => {
             const trimmedUrl = url.trim();
             axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(trimmedUrl)}`)
               .then((response) => {
-                // console.log('response:');
-                // console.log(response);
-                // console.log(response.data);
-                // console.log(response.status);
                 if (response.status === 200) {
                   return response.data;
                 }
                 throw new Error('Network error');
               })
               .then(({ contents }) => {
-                // console.log('contents');
-                // console.log(contents);
                 try {
                   const feedData = parser(contents);
                   return feedData;
@@ -117,7 +110,6 @@ export default () => {
               })
               .then((feedData) => {
                 watchedState.form.status = 'success';
-                // console.log({ feedData });
                 const feedId = uniqueId();
                 watchedState.feeds = [
                   {
@@ -150,10 +142,10 @@ export default () => {
                 console.log(error);
                 watchedState.form.status = 'filling';
 
-                if (error.toString().includes('Network error')) {
-                  watchedState.form.errors = { networkError: error };
-                } else if (error.toString().includes('Invalid RSS')) {
+                if (error.toString().includes('Invalid RSS')) {
                   watchedState.form.errors = { invalidRss: error };
+                } else {
+                  watchedState.form.errors = { networkError: error };
                 }
               });
           }
@@ -185,9 +177,6 @@ export default () => {
                 post.feedId === feed.id
                 && post.pubDate === newPost.pubDate
               ));
-              // if (oldPost === undefined) {
-              //   console.log(`add new post ${JSON.stringify(newPost)}`);
-              // }
               return oldPost === undefined;
             })
             .map((post) => ({

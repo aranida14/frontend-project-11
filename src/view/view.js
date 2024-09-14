@@ -24,8 +24,6 @@ export default (elements, t, state) => {
         }
         break;
       case 'form.errors':
-        // console.log('form.errors value:');
-        // console.log(value);
         if (!isEmpty(value)) {
           inputFeedback.classList.remove('text-success');
           inputFeedback.classList.add('text-danger');
@@ -42,7 +40,6 @@ export default (elements, t, state) => {
         }
         break;
       case 'feeds':
-        // console.log(Object.keys(watchedState.feeds));
         form.reset();
         input.focus();
         renderFeeds(feedsContainer, value);
