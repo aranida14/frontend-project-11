@@ -11,6 +11,8 @@ export default (elements, t, state) => {
     submitButton,
     feedsContainer,
     postsContainer,
+    modalTitle,
+    modalBody,
   } = elements;
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
@@ -46,7 +48,7 @@ export default (elements, t, state) => {
         renderFeeds(feedsContainer, value);
         break;
       case 'posts':
-        renderPosts(postsContainer, value);
+        renderPosts(postsContainer, value, watchedState);
         break;
       case 'form.status':
         if (value === 'processing') {
@@ -63,6 +65,18 @@ export default (elements, t, state) => {
         } // else if (value === 'error') {
 
         // }
+        break;
+      case 'currentPost':
+        if (value) {
+          const currentPost = watchedState.posts.find((post) => post.id === value);
+          if (currentPost) {
+            modalTitle.textContent = currentPost.title;
+            modalBody.textContent = currentPost.description;
+          }
+        }
+        break;
+      case 'uiState.viewedPosts':
+        renderPosts(postsContainer, watchedState.posts, watchedState);
         break;
       default:
         break;

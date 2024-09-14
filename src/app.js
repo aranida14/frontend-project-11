@@ -17,6 +17,8 @@ export default () => {
     inputFeedback: document.querySelector('.feedback'),
     feedsContainer: document.querySelector('.feeds'),
     postsContainer: document.querySelector('.posts'),
+    modalTitle: document.querySelector('.modal-title'),
+    modalBody: document.querySelector('.modal-body'),
   };
 
   const initialState = {
@@ -24,6 +26,10 @@ export default () => {
       status: 'filling', // processing | success
       isValid: true,
       errors: {},
+    },
+    currentPost: null, // post id
+    uiState: {
+      viewedPosts: [], // post ids
     },
     // { id: string, title: string, description: string, link: url }
     feeds: [],
