@@ -26,10 +26,6 @@ export default (rssXmlString) => {
       pubDate: itemPubDate,
     };
   });
-  // return {
-  //   feedInfo: { title, description },
-  //   posts,
-  // };
   return {
     title,
     description,

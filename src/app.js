@@ -1,10 +1,10 @@
 import * as yup from 'yup';
-import axios from 'axios';
 import { isEmpty, uniqueId } from 'lodash';
 import i18next from 'i18next';
 import resources from './locales/index.js';
 import watch from './view/view.js';
 import parser from './parser.js';
+import proxyRequest from './utils.js';
 
 export default () => {
   const defaultLang = 'ru';
@@ -92,13 +92,7 @@ export default () => {
             watchedState.form.errors = {};
 
             const trimmedUrl = url.trim();
-            axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(trimmedUrl)}`)
-              .then((response) => {
-                if (response.status === 200) {
-                  return response.data;
-                }
-                throw new Error('Network error');
-              })
+            proxyRequest(trimmedUrl)
               .then(({ contents }) => {
                 try {
                   const feedData = parser(contents);
@@ -153,14 +147,7 @@ export default () => {
 
     // раз в 5 секунд проверять фиды на наличие новых постов
     setTimeout(function updateFeeds() {
-      const promises = watchedState.feeds.map((feed) => axios
-        .get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(feed.link)}`)
-        .then((response) => {
-          if (response.status === 200) {
-            return response.data;
-          }
-          throw new Error('Network error');
-        })
+      const promises = watchedState.feeds.map((feed) => proxyRequest(feed.link)
         .then(({ contents }) => {
           try {
             const feedData = parser(contents);
