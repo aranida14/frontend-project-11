@@ -94,14 +94,7 @@ export default () => {
             const trimmedUrl = url.trim();
             proxyRequest(trimmedUrl)
               .then(({ contents }) => {
-                try {
-                  const feedData = parser(contents);
-                  return feedData;
-                } catch (error) {
-                  throw new Error('Invalid RSS');
-                }
-              })
-              .then((feedData) => {
+                const feedData = parser(contents);
                 watchedState.form.status = 'success';
                 const feedId = uniqueId();
                 watchedState.feeds = [
@@ -135,7 +128,7 @@ export default () => {
                 console.log(error);
                 watchedState.form.status = 'filling';
 
-                if (error.toString().includes('Invalid RSS')) {
+                if (error.toString().includes('Parse error')) {
                   watchedState.form.errors = { invalidRss: error };
                 } else {
                   watchedState.form.errors = { networkError: error };
@@ -149,15 +142,8 @@ export default () => {
     setTimeout(function updateFeeds() {
       const promises = watchedState.feeds.map((feed) => proxyRequest(feed.link)
         .then(({ contents }) => {
-          try {
-            const feedData = parser(contents);
-            return feedData;
-          } catch (error) {
-            throw new Error('Invalid RSS');
-          }
-        })
-        .then((feedData) => {
-          const newPosts = feedData.posts
+          const feedData = parser(contents);
+          const newPosts = feedData.items
             .filter((newPost) => {
               const oldPost = watchedState.posts.find((post) => (
                 post.feedId === feed.id
