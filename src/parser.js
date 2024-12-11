@@ -1,27 +1,38 @@
 export default (rssXmlString) => {
   const domParser = new DOMParser();
   const xmlDocument = domParser.parseFromString(rssXmlString, 'text/xml');
+
+  const errorNode = xmlDocument.querySelector('parsererror');
+  if (errorNode) {
+    throw new Error(`Parse error: ${errorNode.textContent}`);
+  }
+
   const channel = xmlDocument.querySelector('channel');
   // feed
-  const feedTitle = channel.querySelector('title').textContent;
-  const feedDescription = channel.querySelector('description').textContent;
+  const title = channel.querySelector('title').textContent;
+  const description = channel.querySelector('description').textContent;
 
   // posts
-  const postsElements = channel.querySelectorAll('item');
-  const posts = [...postsElements].map((postElement) => {
-    const title = postElement.querySelector('title').textContent;
-    const link = postElement.querySelector('link').textContent;
-    const description = postElement.querySelector('description').textContent;
-    const pubDate = postElement.querySelector('pubDate').textContent;
+  const itemsElements = channel.querySelectorAll('item');
+  const items = [...itemsElements].map((postElement) => {
+    const itemTitle = postElement.querySelector('title').textContent;
+    const itemLink = postElement.querySelector('link').textContent;
+    const itemDescription = postElement.querySelector('description').textContent;
+    const itemPubDate = postElement.querySelector('pubDate').textContent;
     return {
-      title,
-      link,
-      description,
-      pubDate,
+      title: itemTitle,
+      link: itemLink,
+      description: itemDescription,
+      pubDate: itemPubDate,
     };
   });
+  // return {
+  //   feedInfo: { title, description },
+  //   posts,
+  // };
   return {
-    feedInfo: { title: feedTitle, description: feedDescription },
-    posts,
+    title,
+    description,
+    items,
   };
 };

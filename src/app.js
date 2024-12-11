@@ -4,7 +4,6 @@ import { isEmpty, uniqueId } from 'lodash';
 import i18next from 'i18next';
 import resources from './locales/index.js';
 import watch from './view/view.js';
-// import { feeds, posts } from './data.js';
 import parser from './parser.js';
 
 export default () => {
@@ -52,7 +51,7 @@ export default () => {
       .trim()
       .required()
       .url()
-      .notOneOf(feedsLinks), // .notOneOf(['https://lorem-rss.hexlet.app/feed']), , 'RSS already exists'
+      .notOneOf(feedsLinks),
   });
 
   const validate = (fields, schema) => {
@@ -115,12 +114,12 @@ export default () => {
                   {
                     id: feedId,
                     link: trimmedUrl,
-                    title: feedData.feedInfo.title,
-                    description: feedData.feedInfo.description,
+                    title: feedData.title,
+                    description: feedData.description,
                   },
                   ...watchedState.feeds,
                 ];
-                const posts = feedData.posts.map(({
+                const posts = feedData.items.map(({
                   title,
                   link,
                   description,
