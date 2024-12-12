@@ -18,6 +18,7 @@ export default () => {
     postsContainer: document.querySelector('.posts'),
     modalTitle: document.querySelector('.modal-title'),
     modalBody: document.querySelector('.modal-body'),
+    modalDetailsButton: document.querySelector('.full-article'),
   };
 
   const initialState = {

@@ -12,6 +12,7 @@ export default (elements, t, state) => {
     postsContainer,
     modalTitle,
     modalBody,
+    modalDetailsButton,
   } = elements;
   const watchedState = onChange(state, (path, value) => {
     switch (path) {
@@ -64,6 +65,7 @@ export default (elements, t, state) => {
           if (currentPost) {
             modalTitle.textContent = currentPost.title;
             modalBody.textContent = currentPost.description;
+            modalDetailsButton.href = currentPost.link;
           }
         }
         break;
