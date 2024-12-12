@@ -40,8 +40,6 @@ export default (elements, t, state) => {
         }
         break;
       case 'feeds':
-        form.reset();
-        input.focus();
         renderFeeds(feedsContainer, value);
         break;
       case 'posts':
@@ -59,9 +57,11 @@ export default (elements, t, state) => {
           inputFeedback.textContent = t('feedback.success');
           inputFeedback.classList.add('text-success');
           inputFeedback.classList.remove('text-danger');
-        } // else if (value === 'error') {
-
-        // }
+          form.reset();
+          input.focus();
+        } else if (value === 'filling') {
+          input.focus();
+        }
         break;
       case 'currentPost':
         if (value) {
