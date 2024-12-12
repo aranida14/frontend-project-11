@@ -22,7 +22,7 @@ export default () => {
 
   const initialState = {
     form: {
-      status: 'filling', // processing | success
+      status: 'filling', // processing | success | failure
       isValid: true,
       errors: {},
     },
@@ -86,7 +86,7 @@ export default () => {
           if (!isEmpty(errors)) {
             watchedState.form.errors = errors;
             watchedState.form.isValid = false;
-            watchedState.form.status = 'filling';
+            watchedState.form.status = 'failure';
           } else {
             watchedState.form.isValid = true;
             watchedState.form.errors = {};
@@ -126,13 +126,12 @@ export default () => {
               })
               .catch((error) => {
                 console.log(error);
-                watchedState.form.status = 'filling';
-
                 if (error.toString().includes('Parse error')) {
                   watchedState.form.errors = { invalidRss: error };
                 } else {
                   watchedState.form.errors = { networkError: error };
                 }
+                watchedState.form.status = 'failure';
               });
           }
         });

@@ -1,5 +1,4 @@
 import onChange from 'on-change';
-import { isEmpty } from 'lodash';
 import renderFeeds from './renderFeeds.js';
 import renderPosts from './renderPosts.js';
 
@@ -23,22 +22,6 @@ export default (elements, t, state) => {
           input.classList.add('is-invalid');
         }
         break;
-      case 'form.errors':
-        if (!isEmpty(value)) {
-          inputFeedback.classList.remove('text-success');
-          inputFeedback.classList.add('text-danger');
-          if (value.url) {
-            const { key, values } = value.url;
-            inputFeedback.textContent = t(key, values);
-          } else if (value.networkError) {
-            inputFeedback.textContent = t('feedback.networkError');
-          } else if (value.invalidRss) {
-            inputFeedback.textContent = t('feedback.invalidRss');
-          } else if (isEmpty(value)) {
-            inputFeedback.textContent = '';
-          }
-        }
-        break;
       case 'feeds':
         renderFeeds(feedsContainer, value);
         break;
@@ -49,18 +32,30 @@ export default (elements, t, state) => {
         if (value === 'processing') {
           submitButton.setAttribute('disabled', '');
           input.setAttribute('disabled', '');
+          inputFeedback.textContent = '';
         } else {
           submitButton.removeAttribute('disabled');
           input.removeAttribute('disabled');
+          input.focus();
         }
         if (value === 'success') {
           inputFeedback.textContent = t('feedback.success');
           inputFeedback.classList.add('text-success');
           inputFeedback.classList.remove('text-danger');
           form.reset();
-          input.focus();
-        } else if (value === 'filling') {
-          input.focus();
+        }
+        if (value === 'failure') {
+          inputFeedback.classList.remove('text-success');
+          inputFeedback.classList.add('text-danger');
+          const { errors } = watchedState.form;
+          if (errors.url) {
+            const { key, values } = errors.url;
+            inputFeedback.textContent = t(key, values);
+          } else if (errors.networkError) {
+            inputFeedback.textContent = t('feedback.networkError');
+          } else if (errors.invalidRss) {
+            inputFeedback.textContent = t('feedback.invalidRss');
+          }
         }
         break;
       case 'currentPost':
