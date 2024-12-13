@@ -170,7 +170,7 @@ export default () => {
         }));
 
       Promise.all(promises)
-        .then(() => setTimeout(updateFeeds, 5000));
+        .finally(() => setTimeout(updateFeeds, 5000));
     }, 5000);
   });
 };
